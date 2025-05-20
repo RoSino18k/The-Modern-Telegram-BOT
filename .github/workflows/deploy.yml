@@ -1,0 +1,69 @@
+name: CI/CD for Telegram Bot
+
+on:
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Check syntax
+      run: node -c bot.js
+
+    - name: Deploy to VPS
+      env:
+        VPS_HOST: ${{ secrets.VPS_IP }}
+        VPS_USER: root
+        VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+      run: |
+        echo "$VPS_SSH_KEY" > ssh_key
+        chmod 600 ssh_key
+        mkdir -p ~/.ssh
+        ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts || echo "ssh-keyscan failed"
+        ssh -i ssh_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'EOF'
+          cd /root/telegram-bot
+          git pull origin main
+          npm install
+
+          # Tìm và dừng bot cũ
+          BOT_PID=$(pgrep -f "node bot.js")
+          if [ -n "$BOT_PID" ]; then
+            echo "Stopping bot with PID: $BOT_PID"
+            kill -9 $BOT_PID
+            sleep 2
+          fi
+
+          # Kiểm tra không còn bot chạy
+          if pgrep -f "node bot.js" > /dev/null; then
+            echo "Error: Failed to stop existing bot"
+            exit 1
+          fi
+
+          # Khởi động bot mới
+          nohup node bot.js > bot.log 2>&1 &
+          sleep 2
+          
+          # Kiểm tra bot mới khởi động
+          if pgrep -f "node bot.js" > /dev/null; then
+            echo "Bot started successfully"
+          else
+            echo "Error: Bot failed to start"
+            exit 1
+          fi
+        EOF
