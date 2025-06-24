@@ -1,6 +1,6 @@
 // Nhập các thư viện cần thiết
 const { Telegraf } = require('telegraf');
-const { message } = require('telegraf/filters');
+
 const express = require('express');
 const fs = require('fs');
 require('dotenv').config();
