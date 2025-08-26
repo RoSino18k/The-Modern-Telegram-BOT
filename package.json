@@ -1,25 +1,26 @@
 {
   "name": "telegram-bot",
   "version": "1.0.0",
-  "description": "",
+  "description": "A new repository starting a Telegram BOT!",
   "main": "bot.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/RoSino18k/telegram-bot.git"
-  },
   "keywords": [],
-  "author": "",
+  "author": "RoSino18k",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/RoSino18k/telegram-bot/issues"
-  },
-  "homepage": "https://github.com/RoSino18k/telegram-bot#readme",
   "dependencies": {
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "telegraf": "^4.16.3"
-  }
+  },
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RoSino18k/telegram-bot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RoSino18k/telegram-bot/issues"
+  },
+  "homepage": "https://github.com/RoSino18k/telegram-bot#readme"
 }
