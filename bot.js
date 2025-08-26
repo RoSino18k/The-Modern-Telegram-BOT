@@ -1,13 +1,11 @@
 /*
-
 by @RoSino18k 2025
- 
 */
 // Nhập các thư viện cần thiết
 const { Telegraf } = require('telegraf');
-
 const express = require('express');
 const fs = require('fs');
+const https = require('https');
 require('dotenv').config();
 const { writeFileSync, readFileSync } = require('fs');
 const usersFile = './users.json';
@@ -33,10 +31,17 @@ if (!fs.existsSync(usersFile)) {
 const app = express();
 app.use(express.json()); // Middleware để parse JSON từ Telegram
 
+// Cấu hình HTTPS
+const httpsOptions = {
+    key: fs.readFileSync('/etc/ssl/self-signed/server.key'),
+    cert: fs.readFileSync('/etc/ssl/self-signed/server.crt'),
+    secureOptions: require('constants').SSL_OP_NO_TLSv1 | require('constants').SSL_OP_NO_TLSv1_1
+};
+
 // Kiểm tra biến môi trường
 const BOT_TOKEN = process.env.BOT_TOKEN;
 const WEBHOOK_IP = process.env.WEBHOOK_IP;
-const PORT = process.env.PORT || 3000;
+const PORT = 443; // Sử dụng port 443 cho HTTPS
 
 if (!BOT_TOKEN || !WEBHOOK_IP) {
     console.error('Lỗi: Thiếu BOT_TOKEN hoặc WEBHOOK_IP trong file .env');
@@ -46,15 +51,15 @@ if (!BOT_TOKEN || !WEBHOOK_IP) {
 // Khởi tạo bot với token
 const bot = new Telegraf(BOT_TOKEN, {
     telegram: {
-        webhookReply: true, // Cho phép phản hồi qua webhook
-        apiRoot: 'https://api.telegram.org', // API Telegram mặc định
+        webhookReply: true,
+        apiRoot: 'https://api.telegram.org',
     },
 });
 
 // Middleware logging để theo dõi các update
 bot.use(async (ctx, next) => {
     console.log('Nhận update:', JSON.stringify(ctx.update, null, 2));
-    return next(); // Xử lý tất cả update
+    return next();
 });
 
 // Xử lý lệnh /start
@@ -79,6 +84,8 @@ bot.command('start', async (ctx) => {
         console.error('Lỗi gửi phản hồi /start:', err);
     }
 });
+
+// Xử lý lệnh /broadcast
 bot.command('broadcast', async (ctx) => {
     const users = JSON.parse(fs.readFileSync(usersFile));
     const user = users.find(u => u.id === ctx.from.id);
@@ -94,7 +101,7 @@ bot.command('broadcast', async (ctx) => {
         try {
             await bot.telegram.sendMessage(user.chatId, message);
             successCount++;
-            await new Promise(resolve => setTimeout(resolve, 50)); // Độ trễ 50ms
+            await new Promise(resolve => setTimeout(resolve, 50));
         } catch (err) {
             console.error(`Lỗi gửi tới ${user.chatId}:`, err.message);
             failCount++;
@@ -102,6 +109,8 @@ bot.command('broadcast', async (ctx) => {
     }
     await ctx.reply(`Gửi xong! Thành công: ${successCount}, Thất bại: ${failCount}`);
 });
+
+// Xử lý lệnh /listusers
 bot.command('listusers', async (ctx) => {
     const users = JSON.parse(fs.readFileSync(usersFile));
     const user = users.find(u => u.id === ctx.from.id);
@@ -114,7 +123,7 @@ bot.command('listusers', async (ctx) => {
     const userList = users.map(u =>
         `ID: ${u.id}, Tên: ${u.first_name}${u.last_name ? ' ' + u.last_name : ''}, Username: ${u.username || 'Không có'}, Quyền: ${u.right === RIGHTS.SUPERUSER ? 'Super User' : u.right === RIGHTS.ADVANCEDUSER ? 'Advanced User' : u.right === RIGHTS.PRIMARYUSER ? 'Primary User' : 'None'}`
     );
-    const maxLength = 4000; // Giới hạn an toàn dưới 4096 ký tự
+    const maxLength = 4000;
     let currentMessage = `Danh sách người dùng (${users.length}):\n`;
     const messages = [];
 
@@ -130,12 +139,11 @@ bot.command('listusers', async (ctx) => {
 
     for (const msg of messages) {
         await ctx.reply(msg, { reply_to_message_id: ctx.message.message_id });
-        await new Promise(resolve => setTimeout(resolve, 50)); // Độ trễ 50ms
+        await new Promise(resolve => setTimeout(resolve, 50));
     }
 });
 
-
-
+// Xử lý lệnh /setright
 bot.command('setright', async (ctx) => {
     const users = JSON.parse(fs.readFileSync(usersFile));
     const user = users.find(u => u.id === ctx.from.id);
@@ -146,7 +154,6 @@ bot.command('setright', async (ctx) => {
     let targetId, right, rightName;
 
     if (ctx.message.reply_to_message) {
-        // Reply mode
         if (args.length !== 1) {
             return ctx.reply('Reply tin nhắn và nhập: /setright <tên quyền>\nTên quyền: superuser, advanceduser, primaryuser, none', { reply_to_message_id: ctx.message.message_id });
         }
@@ -161,7 +168,6 @@ bot.command('setright', async (ctx) => {
         targetId = repliedUser.id;
         right = RIGHT_NAMES[rightName];
     } else {
-        // ID mode
         if (args.length !== 2) {
             return ctx.reply('Sử dụng: /setright <user_id> <tên quyền>\nTên quyền: superuser, advanceduser, primaryuser, none', { reply_to_message_id: ctx.message.message_id });
         }
@@ -183,12 +189,11 @@ bot.command('setright', async (ctx) => {
     await ctx.reply(`Đã đặt quyền ${rightText} cho ID ${targetId}`, { reply_to_message_id: ctx.message.message_id });
 });
 
-
 // Xử lý lệnh /help
 bot.command('help', async (ctx) => {
     console.log('Xử lý lệnh /help từ:', ctx.from);
     try {
-        await ctx.reply('Danh sách lệnh:\n/start - Khởi động bot\n/help - Hiển thị trợ giúp');
+        await ctx.reply('Danh sách lệnh:\n/start - Khởi động bot\n/help - Hiển thị trợ giúp\n/broadcast - Gửi tin nhắn tới tất cả người dùng (Super User)\n/listusers - Liệt kê người dùng (Super User)\n/setright - Cấp quyền cho người dùng (Super User)');
     } catch (err) {
         console.error('Lỗi gửi phản hồi /help:', err);
     }
@@ -214,7 +219,7 @@ const webhookPath = '/webhook';
 app.post(webhookPath, (req, res) => {
     console.log('Nhận webhook request:', req.body);
     try {
-        bot.handleUpdate(req.body, res); // Xử lý update từ Telegram
+        bot.handleUpdate(req.body, res);
     } catch (err) {
         console.error('Lỗi xử lý webhook request:', err);
         res.status(500).send('Error processing webhook');
@@ -228,11 +233,9 @@ app.get('/', (req, res) => {
 
 // Hàm thiết lập webhook
 async function setupWebhook() {
-    // const certificatePath = '/etc/ssl/self-signed/server.crt';
-    const certificatePath = '/etc/letsencrypt/live/cudemvn.shop-0001/fullchain.pem';
+    const certificatePath = '/etc/ssl/self-signed/server.crt';
     const webhookUrl = `https://${WEBHOOK_IP}${webhookPath}`;
 
-    // Kiểm tra file chứng chỉ
     try {
         if (!fs.existsSync(certificatePath)) {
             throw new Error(`File chứng chỉ không tồn tại: ${certificatePath}`);
@@ -240,13 +243,11 @@ async function setupWebhook() {
         const certificate = fs.readFileSync(certificatePath);
         console.log(`Đọc chứng chỉ thành công từ: ${certificatePath}`);
 
-        // Thiết lập webhook với chứng chỉ tự ký
         await bot.telegram.setWebhook(webhookUrl, {
-            certificate: { source: certificate }, // Đảm bảo gửi chứng chỉ đúng định dạng
+            certificate: { source: certificate },
         });
         console.log(`Webhook đã được thiết lập tại: ${webhookUrl}`);
 
-        // Kiểm tra trạng thái webhook ngay sau khi thiết lập
         const webhookInfo = await bot.telegram.getWebhookInfo();
         console.log('Trạng thái webhook:', JSON.stringify(webhookInfo, null, 2));
     } catch (err) {
@@ -258,12 +259,19 @@ async function setupWebhook() {
 // Hàm chính để khởi động bot
 async function startBot() {
     try {
-        // Thiết lập webhook trước khi khởi động server
         await setupWebhook();
 
-        // Khởi động server Express
-        app.listen(PORT, () => {
-            console.log(`Server chạy trên cổng ${PORT}`);
+        const httpsServer = https.createServer(httpsOptions, app);
+        httpsServer.listen(PORT, () => {
+            console.log(`HTTPS Server đang chạy trên cổng ${PORT}`);
+        });
+
+        httpsServer.on('error', (error) => {
+            console.error('Lỗi HTTPS server:', error);
+            if (error.code === 'EACCES') {
+                console.error('Không có quyền bind port 443. Hãy chạy với sudo');
+            }
+            process.exit(1);
         });
     } catch (err) {
         console.error('Không thể khởi động bot:', err);
