@@ -228,7 +228,8 @@ app.get('/', (req, res) => {
 
 // Hàm thiết lập webhook
 async function setupWebhook() {
-    const certificatePath = '/etc/ssl/self-signed/server.crt';
+    // const certificatePath = '/etc/ssl/self-signed/server.crt';
+    const certificatePath = '/etc/letsencrypt/live/cudemvn.shop-0001/fullchain.pem';
     const webhookUrl = `https://${WEBHOOK_IP}${webhookPath}`;
 
     // Kiểm tra file chứng chỉ
