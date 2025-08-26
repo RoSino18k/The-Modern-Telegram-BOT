@@ -1,3 +1,8 @@
+/*
+
+by @RoSino18k 2025
+ 
+*/
 // Nhập các thư viện cần thiết
 const { Telegraf } = require('telegraf');
 const { message } = require('telegraf/filters');
@@ -6,7 +11,6 @@ const fs = require('fs');
 require('dotenv').config();
 const { writeFileSync, readFileSync } = require('fs');
 const usersFile = './users.json';
-const YOUR_ADMIN_ID = 1233177943; // Thay thế bằng ID của admin
 const RIGHTS = {
     SUPERUSER: 9,
     ADVANCEDUSER: 4,
