@@ -37,7 +37,7 @@ jobs:
         mkdir -p ~/.ssh
         ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts || echo "ssh-keyscan failed"
         ssh -i ssh_key -o StrictHostKeyChecking=no $VPS_USER@$VPS_HOST << 'EOF'
-          cd /root/telegram-bot
+          cd /root/The-Modern-Telegram-BOT
           git pull origin main
           npm install
 
