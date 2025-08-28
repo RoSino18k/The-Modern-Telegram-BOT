@@ -1,7 +1,5 @@
 /*
-
 by @RoSino18k 2025
-
 */
 // Nhập các thư viện cần thiết
 const { Telegraf } = require('telegraf');
