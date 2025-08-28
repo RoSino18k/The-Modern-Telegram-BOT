@@ -1,6 +1,6 @@
 # Dự án Bot Telegram
 
-Một bot Telegram được xây dựng bằng **Node.js** và framework **Telegraf**, hỗ trợ quản lý người dùng, phân quyền, gửi tin nhắn hàng loạt, và thiết lập quyền. Bot sử dụng **webhook** để giao tiếp với Telegram, lưu dữ liệu người dùng trong tệp JSON, và sử dụng **Nginx** làm reverse proxy để chuyển tiếp yêu cầu từ cổng 443 (HTTPS) sang cổng 3000 của server Express.
+Một bot Telegram được xây dựng bằng **Node.js** và framework **Telegraf**, hỗ trợ quản lý người dùng, phân quyền, gửi tin nhắn hàng loạt, và thiết lập quyền. Bot sử dụng **webhook** để giao tiếp với Telegram, lưu dữ liệu người dùng trong tệp JSON, và sử dụng **Nginx** làm reverse proxy để chuyển tiếp yêu cầu từ cổng 443 (HTTPS) sang cổng 3000 của server Express. Ở trong code hiện tại ta sẽ sử dụng port 443 để chạy BOT luôn nhé!
 
 ## 📋 Tính năng
 
