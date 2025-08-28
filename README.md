@@ -61,12 +61,12 @@ Tạo tệp `.env` trong thư mục gốc với nội dung:
 ```bash
 BOT_TOKEN=<your_bot_token>
 WEBHOOK_IP=<your_server_public_ip>
-PORT=3000
+PORT=443
 ```
 
 - `BOT_TOKEN`: Lấy từ BotFather.
 - `WEBHOOK_IP`: IP công khai của máy chủ.
-- `PORT`: Cổng server Express (mặc định: 3000).
+- `PORT`: Cổng server Express (mặc định: 443).
 
 ### 4. Tạo chứng chỉ SSL tự ký
 
