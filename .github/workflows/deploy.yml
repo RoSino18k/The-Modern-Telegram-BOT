@@ -1,5 +1,4 @@
 name: CI/CD for Telegram Bot
-
 on:
   push:
     branches: [ main ]
